@@ -1,0 +1,127 @@
+---
+title: "Anticipatory Impacys of Roe v Wade's Repeal on Female College Applicants"
+author: Elena Voulgaris
+format: beamer
+  aspectratio: 169
+  theme: Madrid 
+editor: visual
+excecute: 
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| include: false
+
+source(here::here("scripts", "data processing", "importdata.R"))
+source(here::here("scripts", "data processing", "combineddata.R"))
+source(here::here("scripts", "data processing", "figures.R"))
+```
+
+##Introduction
+
+Main research question: Did the anticipated repeal of Roe v. Wade change the share of female applicants to colleges in states with abortion bans?
+
+- Treatment group: schools in states where abortion was banned
+
+- Control group: schools in states where abortion remained legal/ bans were blocked
+
+- Outcome: share of applicants who are female
+
+The original research done by Walker et al. found nearly a 1% decrease in female applicants to colleges in ban states as compared to colleges in states where abortion remained legal. This suggests that reproductive health policies are a relevant factor in the demographic composition of universities.
+
+Objective: Replicate original research using IPEDS data to evaluate whether results agreed with the original findings.
+
+##Data
+
+Key difference in replication: Walker et al. used the Common Dataset (CDS) while I used Integrated Postsecondary Education Data System (IPEDS) surveys. The complete list of data I used is as follows:
+
+- IPEDS admissions data, 2018-2022
+
+- IPEDS institution directory data (identify school location)
+
+- IPEDS fall enrollment data (determine out of state enrollment share)
+
+- State abortion policy data, drawn from table 1 in Walker et al.
+
+- US News 2022-2023 rankings- Andy Reiter (define the top 100 sample)
+
+##Data Comparison
+
+IPEDS vs CDS
+
+- IPEDS is standardized whereas CDS is reported by college
+
+- School sample used in the replication will differ from the 71 schools used in the original paper
+
+- Walker et al. use applicant counts reported by CDS; female share estimates may differ
+
+- Walker et al. uses applications to measure out of state; my replication uses IPEDS' enrollment statistics as a proxy. Figures A2 and A4 are not exact replications as enrolled students differ from applicants.
+
+##Data: Roadmap
+
+Event study comparison of annual changes in the female applicant share between ban and control state schools. 2021, the year immediately before the policy change, is used as the reference year. Standard errors were clustered by university through UNITID.
+
+General workflow:
+
+- Use IPEDS admissions and directory data to match schools by UNITID and year
+
+- Add state abortion policy indicator (1 for banned, 0 for legal)
+
+- Add 2022-23 US News rank according to UNITID; keep top 100 ranked schools 2018-2022
+
+- Create female applicant share as APPLCNW/ (APPLCNW + APPLCNM)
+
+```{r}
+female_share ~ i(year, repeal, ref = 2021) | UNITID + year
+```
+
+This includes school fixed effects to account for stable differences across institutions, and year fixed effects to account for national changes.
+
+##Results: Figure 1
+
+```{r}
+figure_1
+figure_1$data |>
+  filter(year == 2022) |>
+  select(year, estimate, lower_ci, upper_ci)
+```
+
+##Results: Figure a1
+
+```{r}
+figure_a1
+```
+
+##Results: Figure a2
+
+```{r}
+figure_a2
+```
+
+##Results: Figure a3
+
+```{r}
+figure_a3
+```
+
+\## Results: Figure a4
+
+```{r}
+figure_a4
+```
+
+##Conclusion: What does it mean?
+
+Were anticipated abortion policy changes associated with changes in share of female applicants?
+
+- Yes- results were consistent with the findings of Walker et al.
+
+- The anticipated repeal was associated with a decline in share of female applicants to universities in abortion banned states
+
+- The pattern appears stronger at highly ranked universities that enroll many out of state students
+
+- Results are consistent but not an exact reproduction
+
+- Not proof of individual causal decision

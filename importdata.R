@@ -1,7 +1,7 @@
 #==== LOAD PACKAGES ====#
 suppressMessages(install.packages("pacman",quiet=TRUE))
 library (pacman)
-pacman::p_load(here, readxl, readr, tidyverse, modelsummary)
+pacman::p_load(here, readxl, readr, tidyverse, modelsummary, dplyr, fixest, ggplot2, stringr, tinytex)
 
 #==== IMPORT RANKINGS DATA ====#
 
@@ -59,6 +59,17 @@ df.hd <-df
 rm(folder.path, lf, ll, df, df2)
 
 df.hd |> select(UNITID,year,STABBR) |> datasummary_skim()
+
+#==== IMPORT EFC DATA ====#
+#build EF-C folder path
+folder.path <- here("EF-C/")
+
+df.efc <- read_csv(
+  here("EF-C", "ef2021c_rv.csv"),
+  show_col_types = FALSE
+)
+
+names(df.efc)
 
 #==== IMPORTING BAN STATUS DATA ====#
 df.policy <- read_excel(here("ban status data.xlsx"))
