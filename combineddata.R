@@ -1,39 +1,18 @@
-#===== LOAD DATAFRAMES =====#
-source(here("importdata.R"))
-
 #==== JOINING DATA ====#
+#make year numeric so its possible to join
 df.adm <- df.adm |>
   mutate(year = as.numeric(year))
 
 df.hd <- df.hd |>
   mutate(year = as.numeric(year))
 
+#create one data frame by adding directory info to admissions data
 df <- df.adm |>
   left_join(df.hd, join_by(UNITID, year))
 
 #==== POLICY VARIABLE ====#
 
-df <-  df.policy |>
-  select(STABBR = state_abbr, status = `abortion_status`) |>
-  mutate(repeal = if_else(status == "Banned",1,0)) |>
-  right_join(df,join_by(STABBR))
-df |> count(repeal)
-
-# Recreate combined school-year data without prior policy columns
-df <- df.adm |>
-  select(-any_of(c("status", "repeal", "repeal.x", "repeal.y"))) |>
-  left_join(df.hd, join_by(UNITID, year))
-
-# Add one clean repeal column
-df <- df |>
-  left_join(policy_for_join, by = "STABBR")
-
-
-# Create the main school-year data frame
-df <- df.adm |>
-  left_join(df.hd, join_by(UNITID, year))
-
-# Add policy status
+# Create the abortion-policy treatment indicator
 policy_for_join <- df.policy |>
   transmute(
     STABBR = state_abbr,
@@ -44,38 +23,23 @@ policy_for_join <- df.policy |>
     )
   )
 
+# Match university to state policy indicator
 df <- df |>
   left_join(policy_for_join, by = "STABBR")
 
 #===== OUTCOME VARIABLE ====#
-
+# calculate female share
 df |> mutate(wshare = APPLCNW/(APPLCNW + APPLCNM)) 
 
-#==== HETEROGENOUS VARIABLES ====#
-
-names(df.rank)
-
+#==== ADD US NEWS RANK, DEFINE ANALYSIS SAMPLE ====#
+# make rankings long format: one row per year
 df.rank.long <- df.rank |>
   pivot_longer(
     cols = `2026`:`1984`,  
     names_to = "year",
     values_to = "rank")
 
-df <- df |>
-  left_join(
-    #format df.rank.long to have numerical year and UNITID cols
-    df.rank.long |> mutate(year = as.numeric(year),UNITID = IPEDS),
-    join_by(UNITID,year)
-  )
-
-df <- df.rank |> select(UNITID = IPEDS,rank2023 = `2023`) |> 
-  right_join(df,join_by(UNITID))
-
-df |> select(UNITID,rank2023) |> datasummary_skim()
-
-df |> filter(!is.na(rank2023)) |> distinct(UNITID) |> nrow()
-
-#==== ADD US NEWS RANK, DEFINE ANALYSIS SAMPLE ====#
+# keep 2023 ranking as the fixed measure to define the sample
 ranking_for_join <- df.rank.long |>
   filter(year == 2023) |>
   transmute(
@@ -85,14 +49,17 @@ ranking_for_join <- df.rank.long |>
   filter(!is.na(UNITID), !is.na(usnews_rank)) |>
   distinct(UNITID, .keep_all = TRUE)
 
+# check that every university was assigned only one ranking
 ranking_for_join |>
   count(UNITID) |>
   filter(n > 1)
 
+# add rankings to the combined data
 df <- df |>
   select(-any_of("usnews_rank")) |>
   left_join(ranking_for_join, by = "UNITID")
 
+# restrict sample to top 100 ranked schools; construct female share
 analysis_df <- df |>
   filter(
     year %in% 2018:2022,
@@ -104,11 +71,12 @@ analysis_df <- df |>
     UNITID,
     year,
     repeal,
-    female_share = APPLCNW / APPLCN,
+    female_share = APPLCNW / (APPLCNW + APPLCNM),
     usnews_rank
   ) |>
   filter(!is.na(female_share))
 
+# check number of observations, number of schools 
 analysis_df |>
   summarise(
     school_years = n(),
@@ -139,6 +107,15 @@ school_state <- school_state_check |>
   select(UNITID, FIPS)
 
 #==== OUT OF STATE ENROLLMENT SHARE FROM EF-C ====#
+# FIPS codes for the 50 states and Washington, DC
+state_fips <- c(
+  1, 2, 4, 5, 6, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18,
+  19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+  32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 44, 45,
+  46, 47, 48, 49, 50, 51, 53, 54, 55, 56
+)
+
+# calculate share of out of state enrollment
 df.outstate <- df.efc |>
   transmute(
     UNITID = as.numeric(UNITID),
@@ -159,7 +136,7 @@ df.outstate <- df.efc |>
   )
 
 #==== ADD OUT OF STATE SHARE TO ANALYSIS SAMPLE ====#
-
+# add enrollment share for every university to every year
 analysis_df <- analysis_df |>
   select(-any_of("outstate_share")) |>
   left_join(

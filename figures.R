@@ -1,25 +1,28 @@
 #==== PLOT FUNCTION ====#
-
+#estimate event study model
 make_event_plot <- function(data, figure_title) {
-  
+
+  #estimate effects of being in a ban state; control for year and school fixed effects  
   model <- feols(
     female_share ~ i(year, repeal, ref = 2021) | UNITID + year,
     cluster = ~ UNITID,
     data = data
   )
-  
+ #find coefficients, confidence intervals 
   estimates <- coef(model)
   intervals <- confint(model)
-  
+  # build dataframe; one estimate and confidence interval 95%
   plot_data <- tibble(
     term = names(estimates),
     estimate = unname(estimates),
     lower_ci = intervals[names(estimates), 1],
     upper_ci = intervals[names(estimates), 2]
   ) |>
+    #extract year from coefficient
     mutate(
       year = as.integer(stringr::str_extract(term, "\\d{4}"))
     ) |>
+    # add omitted reference year 2021, effect of 0
     bind_rows(
       tibble(
         term = "2021 reference",
@@ -31,6 +34,7 @@ make_event_plot <- function(data, figure_title) {
     ) |>
     arrange(year)
   
+  # create the event study figure
   ggplot(plot_data, aes(x = year, y = estimate)) +
     geom_hline(yintercept = 0, linetype = "dashed") +
     geom_errorbar(
