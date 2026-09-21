@@ -42,7 +42,7 @@ make_event_plot <- function(data, figure_title) {
       width = 0.08
     ) +
     geom_point(shape = 15, size = 3) +
-    scale_x_continuous(breaks = 2018:2022) +
+    scale_x_continuous(breaks = 2018:2024) +
     labs(
       title = figure_title,
       x = NULL,
@@ -101,25 +101,11 @@ figure_a4
 
 #==== FIND COEFFICIENT ====#
 figure_1$data |>
-  filter(year == 2022) |>
+  filter(year == 2024) |>
   select(year, estimate, lower_ci, upper_ci)
 
 #==== FOLDER TREE ====#
 fs::dir_tree(here::here(), recurse = 3)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

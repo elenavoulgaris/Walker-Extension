@@ -62,7 +62,7 @@ df <- df |>
 # restrict sample to top 100 ranked schools; construct female share
 analysis_df <- df |>
   filter(
-    year %in% 2018:2022,
+    year %in% 2018:2024,
     !is.na(repeal),
     !is.na(usnews_rank),
     usnews_rank <= 100
