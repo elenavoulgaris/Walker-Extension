@@ -91,6 +91,66 @@ figure_a4 <- make_event_plot(
   "Figure A4. Change in Share of Female Applications, <50% Out-of-State Enrollment"
 )
 
+
+#==== RETENTION PLOT FUNCTION ====#
+
+make_retention_plot <- function(data, figure_title) {
+  
+  # estimate effect of ban-state exposure on full-time retention
+  model <- feols(
+    retention_rate ~ i(year, repeal, ref = 2021) | UNITID + year,
+    cluster = ~ UNITID,
+    data = data
+  )
+  
+  # find coefficients and 95% confidence intervals
+  estimates <- coef(model)
+  intervals <- confint(model)
+  
+  plot_data <- tibble(
+    term = names(estimates),
+    estimate = unname(estimates),
+    lower_ci = intervals[names(estimates), 1],
+    upper_ci = intervals[names(estimates), 2]
+  ) |>
+    mutate(
+      year = as.integer(stringr::str_extract(term, "\\d{4}"))
+    ) |>
+    bind_rows(
+      tibble(
+        term = "2021 reference",
+        estimate = 0,
+        lower_ci = 0,
+        upper_ci = 0,
+        year = 2021
+      )
+    ) |>
+    arrange(year)
+  
+  ggplot(plot_data, aes(x = year, y = estimate)) +
+    geom_hline(yintercept = 0, linetype = "dashed") +
+    geom_errorbar(
+      aes(ymin = lower_ci, ymax = upper_ci),
+      width = 0.08
+    ) +
+    geom_point(shape = 15, size = 3) +
+    scale_x_continuous(breaks = 2018:2023) +
+    labs(
+      title = figure_title,
+      x = NULL,
+      y = "Change in full-time retention rate"
+    ) +
+    theme_classic()
+}
+
+#==== RETENTION FIGURE ====#
+
+figure_retention <- make_retention_plot(
+  retention_df,
+  "Effect of Ban-State Exposure on Full-Time First-Year Retention"
+)
+
+
 #==== DISPLAY FIGURES ====#
 
 figure_1
@@ -98,17 +158,22 @@ figure_a1
 figure_a2
 figure_a3
 figure_a4
+figure_retention
 
 #==== FIND COEFFICIENT ====#
 figure_1$data |>
   filter(year == 2024) |>
   select(year, estimate, lower_ci, upper_ci)
 
-#==== FOLDER TREE ====#
-fs::dir_tree(here::here(), recurse = 3)
-
-
-
-
+#==== RETENTION COEFFICIENTS ====#
+figure_retention$data |>
+  filter(year %in% c(2022, 2023)) |>
+  transmute(
+    year,
+    retention_change = estimate,
+    percentage_point_change = estimate * 100,
+    lower_ci_percentage_points = lower_ci * 100,
+    upper_ci_percentage_points = upper_ci * 100
+  )
 
 

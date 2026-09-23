@@ -1,3 +1,5 @@
+source(here("retentiondata.R"))
+
 #==== JOINING DATA ====#
 #make year numeric so its possible to join
 df.adm <- df.adm |>
@@ -82,6 +84,36 @@ analysis_df |>
     school_years = n(),
     schools = n_distinct(UNITID)
   )
+#==== CREATE RETENTION ANALYSIS DATA ====#
+
+retention_df <- analysis_df |>
+  inner_join(
+    df.efd |>
+      select(UNITID, cohort_year, report_year, retention_rate),
+    by = c("UNITID", "year" = "cohort_year")
+  ) |>
+  select(
+    UNITID,
+    year,
+    report_year,
+    repeal,
+    retention_rate,
+    usnews_rank
+  ) |>
+  filter(!is.na(retention_rate))
+
+# check retention analysis sample
+retention_df |>
+  summarise(
+    school_years = n(),
+    schools = n_distinct(UNITID),
+    first_cohort_year = min(year),
+    last_cohort_year = max(year)
+  )
+
+retention_df |>
+  count(year)
+
 
 #==== CREATE OUT OF STATE ENROLLMENT MEASURE ====#
 #identify each home state
