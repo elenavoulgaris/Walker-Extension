@@ -1,0 +1,78 @@
+---
+title: "Extending the Findings of Walker et Al."
+author: "Elena Voulgaris and Abby Suber"
+format: 
+  beamer:
+    aspectratio: 169
+    theme: Madrid 
+editor: visual
+excecute: 
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| include: false
+
+source(here::here("importdata.R"))
+source(here::here("retentiondata.R"))
+source(here::here("combineddata.R"))
+source(here::here("figures.R"))
+```
+
+## Introduction
+
+\[why did we do this\]
+
+## Data
+
+To perform this replication, it was necessary to add additional data to our analysis:
+
+- IPEDS admissions (ADM), institution directory (HD), and fall enrollment (EF-C) surveys from the years 2023 & 2024.
+
+- Additional fall enrollment survey EF-D from each year analyzed; this survey contains the annual retention rate.
+
+## Data: Roadmap
+
+\[how did we do this, steps, etc\]
+
+## Results: Figure 1, Extended
+
+```{r}
+figure_1
+```
+
+## Results: Figure a1, Extended
+
+```{r}
+figure_a1
+```
+
+## Results: Figure a2, Extended
+
+```{r}
+figure_a2
+```
+
+## Results: Figure a3, Extended
+
+```{r}
+figure_a3
+```
+
+## Results: Figure a4, Extended
+
+```{r}
+figure_a4
+```
+
+## Results: Retention Analysis
+
+```{r}
+figure_retention
+```
+
+## Conclusion
+
+\[what did we learn\]
